@@ -8,6 +8,7 @@ import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser';
 import path from "path";
 import authRoutes from '../routes/auth.route.js';
+import messageRoutes from '../routes/message.route.js'
 import { connectDB } from '../lib/db.js';
 dotenv.config();
 const app=express();
@@ -20,6 +21,7 @@ app.use(express.json()); //middleware  to ectrach the daata
 
 // const PORT =3000;
 app.use("/api/auth", authRoutes);
+app.use("/api/meaasge",messageRoutes);
 
 app.listen(PORT,()=> {
      console.log(`server running on ${PORT}`)
