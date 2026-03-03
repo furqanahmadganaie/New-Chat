@@ -5,7 +5,7 @@ dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 import express from 'express';
 import dotenv from 'dotenv'
-
+import cookieParser from 'cookie-parser';
 import path from "path";
 import authRoutes from '../routes/auth.route.js';
 import { connectDB } from '../lib/db.js';
@@ -14,6 +14,7 @@ const app=express();
 
 const PORT = process.env.PORT;
 // const __dirname = path.resolve();
+app.use(cookieParser()); //allows to parese the cookie
 //CqCFjIbMLu0g9XdW
 app.use(express.json()); //middleware  to ectrach the daata 
 
