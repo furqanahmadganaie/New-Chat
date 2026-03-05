@@ -1,19 +1,41 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import SettingsPage from './pages/SettingsPage';
+import { useAuthStore } from './store/useAuthStore';
+import {Loader} from 'lucide-react';
+import {Toaster} from 'react-hot-toast';
 
 
 import { Routes,Route,Navigate } from 'react-router-dom';
 
 function App() {
-  const [count, setCount] = useState(0)
+   const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
+  // const { theme } = useThemeStore();
+
+  // console.log({ onlineUsers });
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  console.log({ authUser });
+
+  if (isCheckingAuth && !authUser)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader className="size-10 animate-spin" />
+      </div>
+    );
+
 
   return (
    <div >
     <Navbar/>
+  
+    <h1>hey how are aur</h1>
      
     <Routes>
 
@@ -25,6 +47,7 @@ function App() {
    
 
     </Routes>
+    <Toaster/>
     
    </div>
   )
