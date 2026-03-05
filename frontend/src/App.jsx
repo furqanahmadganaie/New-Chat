@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react';
+import {useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -33,7 +33,7 @@ function App() {
 
   return (
    <div >
-    <Navbar/>
+  <Navbar/>
   
     <h1>hey how are aur</h1>
      
@@ -43,7 +43,7 @@ function App() {
         <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+        {/* <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} /> */}
    
 
     </Routes>
