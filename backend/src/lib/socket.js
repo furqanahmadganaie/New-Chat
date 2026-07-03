@@ -4,6 +4,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 import { env } from "../config/env.js";
+import logger from "../config/logger.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -52,7 +53,7 @@ io.use(async (socket, next) => {
 io.on("connection", (socket) => {
   const userId = socket.data.userId;
 
-  console.log(`User ${userId} connected with socket ${socket.id}`);
+  logger.info({ userId, socketId: socket.id }, "socket connected");
 
   socket.join(userId);
 
@@ -72,7 +73,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log(`User ${userId} disconnected socket ${socket.id}`);
+    logger.info({ userId, socketId: socket.id }, "socket disconnected");
 
     const remainingSockets = userSockets.get(userId);
     remainingSockets?.delete(socket.id);

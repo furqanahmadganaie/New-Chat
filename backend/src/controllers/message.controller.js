@@ -3,11 +3,13 @@ import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { io } from "../lib/socket.js";
 import { measure } from "../utils/performance.js";
+import logger from "../config/logger.js";
 
 // get all users without you 
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
+    logger.info({ requestId: req.requestId, userId: loggedInUserId }, "Fetching users for sidebar");
     const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } })
       .select("-password")
       .lean();
@@ -36,10 +38,15 @@ export const getUsersForSidebar = async (req, res) => {
 
     res.status(200).json(usersWithConversationData);
   } catch (error) {
-    console.error("Error in getUsersForSidebar: ", error.message);
+    logger.error({ requestId: req.requestId, error: error.message }, "Error in getUsersForSidebar");
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+
+
+
 
 export const getMessages = async (req, res) => {
   try {
@@ -64,16 +71,27 @@ export const getMessages = async (req, res) => {
 
     res.status(200).json(messages);
   } catch (error) {
-    console.log("Error in getMessages controller: ", error.message);
+    logger.error({ requestId: req.requestId, error: error.message }, "Error in getMessages controller");
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+
 
 export const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
+    logger.info(
+  {
+    requestId: req.requestId,
+    senderId,
+    receiverId,
+  },
+  "Send message request received"
+);
 
     if (!text?.trim() && !image) {
       return res.status(400).json({ message: "A message or image is required" });
@@ -83,6 +101,13 @@ export const sendMessage = async (req, res) => {
     if (image) {
 
       // Upload base64 image to cloudinary
+      logger.info(
+  {
+    requestId: req.requestId,
+  },
+  "Uploading image to Cloudinary"
+);
+
 const uploadResponse =
 await measure(
 
@@ -100,12 +125,24 @@ await measure(
       imageUrl = uploadResponse.secure_url;
     }
 
+    logger.info(
+  {
+    requestId: req.requestId,
+  },
+  "Image uploaded successfully"
+);
     const newMessage = new Message({
       senderId,
       receiverId,
       text: text?.trim() || "",
       image: imageUrl,
     });
+    logger.info(
+  {
+    requestId: req.requestId,
+  },
+  "Saving message to MongoDB"
+);
 
  await measure(
     req,
@@ -118,6 +155,7 @@ await measure(
 
     }
 );
+
     
     // sent msg to user  in realtime 
     // Every tab/device for this user joins a room named with their user id.
@@ -136,9 +174,17 @@ await measure(
 
 );
 
+logger.info(
+  {
+    requestId: req.requestId,
+    messageId: newMessage._id,
+  },
+  "Message sent successfully"
+);
+
     res.status(201).json(newMessage);
   } catch (error) {
-    console.log("Error in sendMessage controller: ", error.message);
+    logger.error({ requestId: req.requestId, error: error.message }, "Error in sendMessage controller");
 
     if (error?.http_code === 403) {
       return res.status(503).json({
@@ -150,6 +196,9 @@ await measure(
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+
 
 export const markMessagesAsRead = async (req, res) => {
   try {
@@ -167,7 +216,7 @@ export const markMessagesAsRead = async (req, res) => {
 
     res.status(200).json({ message: "Messages marked as read" });
   } catch (error) {
-    console.log("Error marking messages as read:", error.message);
+    logger.error({ requestId: req.requestId, error: error.message }, "Error marking messages as read");
     res.status(500).json({ error: "Internal server error" });
   }
 };

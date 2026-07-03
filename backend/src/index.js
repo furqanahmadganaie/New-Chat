@@ -16,13 +16,17 @@ import { getApplicationMetrics } from "./monitoring/applicationMetrics.js";
 import applicationMetricsRoutes from "./routes/applicationMetrics.route.js";
 import metricsRoutes from "./routes/metrics.route.js";
 import prometheusRoutes from "./routes/prometheus.route.js";
+import logger from "./config/logger.js";
+import httpLogger from "./middleware/logger.middleware.js";
+import requestId from "./middleware/requestId.middleware.js";
 
 const PORT = env.port;
-
-
+app.use(requestId);
+app.use(httpLogger);
 app.use(express.json({limit:"10mb"})); 
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(cookieParser()); 
+
 
 app.use(
   cors({
@@ -53,7 +57,10 @@ connectDB()
     });
 
     server.listen(PORT, () => {
-      console.log(`server running on ${PORT}`);
+
+      // console.log(`server running on ${PORT}`);
+
+      logger.info(`Server running on ${PORT}`);
 
   // console.log(getApplicationMetrics());  now we see those matrics on http://localhost:4000/application-metrics in json form 
   //http://localhost:4000/metrics and on this 
@@ -67,6 +74,6 @@ connectDB()
     
   })
   .catch((error) => {
-    console.error("Failed to start server:", error.message);
+    logger.error("Failed to start server:", error.message);
     process.exit(1);
   });

@@ -75,10 +75,10 @@ const isMonitoringRoute =
       );
       
 
-      if (env.nodeEnv === "development") {
-        console.log("\n========== API METRICS ==========");
-        console.table(getMetrics());
-      }
+      // if (env.nodeEnv === "development") {
+      //   console.log("\n========== API METRICS ==========");
+      //   console.table(getMetrics());
+      // }
     }
 
     const responseSize =
@@ -97,34 +97,35 @@ const isMonitoringRoute =
       req.headers["user-agent"];
 
     const serverName = os.hostname();
+    
+   // committted the api monitoring 
+    // console.log({
+    //   timestamp: new Date().toISOString(),
 
-    console.log({
-      timestamp: new Date().toISOString(),
+    //   requestId: req.requestId,
 
-      requestId: req.requestId,
+    //   method: req.method,
 
-      method: req.method,
+    //   route,
 
-      route,
+    //   status: res.statusCode,
 
-      status: res.statusCode,
+    //   duration: `${duration.toFixed(2)} ms`,
 
-      duration: `${duration.toFixed(2)} ms`,
+    //   ip,
 
-      ip,
+    //   userId,
 
-      userId,
+    //   requestSize: `${requestSize} Bytes`,
 
-      requestSize: `${requestSize} Bytes`,
+    //   responseSize: `${responseSize} Bytes`,
 
-      responseSize: `${responseSize} Bytes`,
+    //   userAgent,
 
-      userAgent,
+    //   environment: env.nodeEnv,
 
-      environment: env.nodeEnv,
-
-      serverName,
-    });
+    //   serverName,
+    // });
   });
 
   next();

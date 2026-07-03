@@ -4,7 +4,8 @@ import {
 } from "../monitoring/functionMetrics.js";
 
 export async function measure(req, operationName, operation) {
-  console.log("MEASURE CALLED:", operationName);
+  
+  // console.log("MEASURE CALLED:", operationName);
   const start = process.hrtime.bigint();
 
   try {
@@ -16,28 +17,31 @@ export async function measure(req, operationName, operation) {
     // Prometheus Metrics
     functionDuration.labels(operationName, "SUCCESS").observe(duration / 1000);
     functionCalls.labels(operationName, "SUCCESS").inc();
-    console.log("PROMETHEUS UPDATED:", operationName);
 
-    console.log({
-      type: "FUNCTION_MONITOR",
+    // console.log("PROMETHEUS UPDATED:", operationName);
+  
+    // commenting out the console log for function monitoring to reduce noise in production
 
-      requestId: req.requestId,
+    // console.log({
+    //   type: "FUNCTION_MONITOR",
 
-      userId:
-        req.user?._id?.toString() || "Anonymous",
+    //   requestId: req.requestId,
 
-      method: req.method,
+    //   userId:
+    //     req.user?._id?.toString() || "Anonymous",
 
-      route: req.originalUrl,
+    //   method: req.method,
 
-      operation: operationName,
+    //   route: req.originalUrl,
 
-      duration: `${duration.toFixed(2)} ms`,
+    //   operation: operationName,
 
-      timestamp: new Date().toISOString(),
+    //   duration: `${duration.toFixed(2)} ms`,
 
-      status: "SUCCESS",
-    });
+    //   timestamp: new Date().toISOString(),
+
+    //   status: "SUCCESS",
+    // });
 
     return result;
   } catch (error) {
@@ -48,28 +52,29 @@ export async function measure(req, operationName, operation) {
     functionDuration.labels(operationName, "FAILED").observe(duration / 1000);
     functionCalls.labels(operationName, "FAILED").inc();
 
-    console.log({
-      type: "FUNCTION_MONITOR",
+ // commenting out the console log for function monitoring to reduce noise in production
+    // console.log({
+    //   type: "FUNCTION_MONITOR",
 
-      requestId: req.requestId,
+    //   requestId: req.requestId,
 
-      userId:
-        req.user?._id?.toString() || "Anonymous",
+    //   userId:
+    //     req.user?._id?.toString() || "Anonymous",
 
-      method: req.method,
+    //   method: req.method,
 
-      route: req.originalUrl,
+    //   route: req.originalUrl,
 
-      operation: operationName,
+    //   operation: operationName,
 
-      duration: `${duration.toFixed(2)} ms`,
+    //   duration: `${duration.toFixed(2)} ms`,
 
-      timestamp: new Date().toISOString(),
+    //   timestamp: new Date().toISOString(),
 
-      status: "FAILED",
+    //   status: "FAILED",
 
-      error: error.message,
-    });
+    //   error: error.message,
+    // });
 
     throw error;
   }
