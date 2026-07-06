@@ -21,11 +21,25 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
+    logger.debug(
+  {
+    requestId: req.requestId,
+    email,
+  },
+  "Searching user by email"
+);
+
     const user = await User.findOne({ email }); //  userr withis emal find 
 
     if (user) return res.status(400).json({ message: "Email already exists" });
 
     const salt = await bcrypt.genSalt(10);
+    logger.debug(
+  {
+    requestId: req.requestId,
+  },
+  "Hashing user password"
+);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new User({
@@ -74,35 +88,88 @@ export const signup = async (req, res) => {
 
 
 
-
 export const login = async (req, res) => {
-  logger.info({ requestId: req.requestId, email: req.body.email }, "Login request received");
   const { email, password } = req.body;
+
+  logger.info(
+    {
+      requestId: req.requestId,
+      email,
+    },
+    "Login request received"
+  );
+
+  logger.debug(
+  {
+    requestId: req.requestId,
+    email,
+  },
+  "Searching user by email"
+);
+
   try {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      logger.warn(
+        {
+          requestId: req.requestId,
+          email,
+        },
+        "Login failed: User not found"
+      );
+
+      return res.status(400).json({
+        message: "Invalid credentials",
+      });
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
     if (!isPasswordCorrect) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      logger.warn(
+        {
+          requestId: req.requestId,
+          userId: user._id,
+        },
+        "Login failed: Invalid password"
+      );
+
+      return res.status(400).json({
+        message: "Invalid credentials",
+      });
     }
 
     generateToken(user._id, res);
 
-    logger.info({ requestId: req.requestId, userId: user._id }, "User logged in successfully");
-    
+    logger.info(
+      {
+        requestId: req.requestId,
+        userId: user._id,
+      },
+      "User logged in successfully"
+    );
+
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
     });
+
   } catch (error) {
-    logger.error({ requestId: req.requestId, error: error.message }, "Error in login controller");
-    res.status(500).json({ message: "Internal Server Error" });
+    logger.error(
+      {
+        requestId: req.requestId,
+        error: error.message,
+        stack: error.stack,
+      },
+      "Login controller failed"
+    );
+
+    res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };
 
