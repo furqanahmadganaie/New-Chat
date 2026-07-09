@@ -1,0 +1,23 @@
+name: CI Pipeline
+# on defines which event trigers the workflow 
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4  
+        # uses :Runs a reusable GitHub Action.
+        # run runs  shell commands npm cci 
+        # checkpouts clones your repo 
