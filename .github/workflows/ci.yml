@@ -1,5 +1,15 @@
+# ============================================
+# Workflow Name
+# This name appears in the GitHub Actions tab.
+# ============================================
 name: CI Pipeline
-# on defines which event trigers the workflow 
+
+# ============================================
+# Events that trigger this workflow
+# CI runs whenever:
+# 1. Code is pushed to the main branch.
+# 2. A Pull Request is opened/updated for main.
+# ============================================
 on:
   push:
     branches:
@@ -9,15 +19,191 @@ on:
     branches:
       - main
 
+# ============================================
+# A workflow can have one or more jobs.
+# Here we have a single job named "build".
+# Jobs run on a GitHub Runner (virtual machine).
+# ============================================
 jobs:
+
   build:
 
+    # Display name shown in GitHub Actions UI
+    name: Build and Validate Application
+
+    # Runner (Virtual Machine)
+    # GitHub creates a fresh Ubuntu machine for every workflow run.
+    # Nothing is saved after the workflow finishes.
     runs-on: ubuntu-latest
 
+    # ============================================
+    # Steps execute one after another.
+    # If any step fails, the workflow stops immediately.
+    # ============================================
     steps:
 
+      # ============================================
+      # STEP 1 : Checkout Repository
+      #
+      # Downloads your GitHub repository onto the runner.
+      #
+      # Without this step the runner has NO source code.
+      #
+      # Equivalent to:
+      # git clone <repository>
+      # ============================================
       - name: Checkout Repository
-        uses: actions/checkout@v4  
-        # uses :Runs a reusable GitHub Action.
-        # run runs  shell commands npm cci 
-        # checkpouts clones your repo 
+        uses: actions/checkout@v4
+
+      # ============================================
+      # STEP 2 : Setup Node.js
+      #
+      # Installs Node.js version 22.
+      #
+      # Why?
+      # Your application requires Node.js.
+      #
+      # cache: npm
+      # Stores downloaded npm packages to speed up
+      # future workflow executions.
+      #
+      # cache-dependency-path
+      # Tells GitHub where package-lock.json files are located.
+      # Since this is a MERN project with frontend and backend,
+      # both lock files are cached separately.
+      # ============================================
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      # ============================================
+      # STEP 3 : Install Backend Dependencies
+      #
+      # working-directory changes the current directory
+      # before executing commands.
+      #
+      # npm ci installs dependencies using package-lock.json.
+      #
+      # Why npm ci instead of npm install?
+      #
+      # - Faster
+      # - Reproducible builds
+      # - Uses exact dependency versions
+      # - Recommended for CI/CD pipelines
+      # ============================================
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      # ============================================
+      # STEP 4 : Install Frontend Dependencies
+      #
+      # Same process for the React frontend.
+      # ============================================
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # ============================================
+      # STEP 5 : Run ESLint
+      #
+      # Checks code quality.
+      #
+      # Examples:
+      # ✔ Unused variables
+      # ✔ Syntax mistakes
+      # ✔ Bad coding practices
+      # ✔ Style consistency
+      #
+      # If lint fails,
+      # deployment should NOT happen.
+      # ============================================
+      - name: Run Frontend ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      # ============================================
+      # STEP 6 : Build React Application
+      #
+      # Creates the production build inside:
+      #
+      # frontend/dist
+      #
+      # If build fails,
+      # CI stops immediately.
+      # ============================================
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
+
+      # ============================================
+      # STEP 7 : Validate Backend
+      #
+      # node --check
+      #
+      # Checks JavaScript syntax without running
+      # the application.
+      #
+      # Catches:
+      # Missing brackets
+      # Missing commas
+      # Invalid JavaScript syntax
+      #
+      # Faster than starting the server.
+      # ============================================
+      - name: Validate Backend
+        working-directory: backend
+        run: node --check src/index.js
+
+      # ============================================
+      # STEP 8 : Build Backend Docker Image
+      #
+      # Ensures backend Dockerfile is valid.
+      #
+      # If Docker build fails,
+      # deployment should stop.
+      #
+      # Image name:
+      # pingme-backend-ci
+      #
+      # This image exists only inside the GitHub runner.
+      # ============================================
+      - name: Build Backend Docker Image
+        working-directory: backend
+        run: docker build -t pingme-backend-ci .
+
+      # ============================================
+      # STEP 9 : Build Frontend Docker Image
+      #
+      # Uses Dockerfile.prod because production
+      # deployments use the optimized build.
+      #
+      # Image name:
+      # pingme-frontend-ci
+      # ============================================
+      - name: Build Frontend Docker Image
+        working-directory: frontend
+        run: docker build -f Dockerfile.prod -t pingme-frontend-ci .
+
+      # ============================================
+      # STEP 10 : Validate docker-compose.yml
+      #
+      # docker compose config
+      #
+      # Checks:
+      # ✔ YAML syntax
+      # ✔ Missing services
+      # ✔ Invalid configuration
+      # ✔ Environment variable substitution
+      #
+      # It DOES NOT start containers.
+      #
+      # It only validates the compose file.
+      # ============================================
+      # - name: Validate Docker Compose File
+      #   run: docker compose config
