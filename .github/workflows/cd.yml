@@ -1,0 +1,91 @@
+name: CD Pipeline
+
+# =====================================================
+# Trigger CD only after CI completes successfully
+# =====================================================
+
+on:
+  workflow_run:
+    workflows:
+      - CI Pipeline
+    types:
+      - completed
+
+jobs:
+  deploy:
+
+    # Run deployment only if CI passed
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    name: Deploy to EC2
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ==========================================
+      # Checkout Repository
+      # ==========================================
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ==========================================
+      # Deploy to EC2 over SSH
+      # ==========================================
+
+      - name: Deploy Application
+        uses: appleboy/ssh-action@v1.2.2
+
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+
+          script: |
+
+            echo "======================================"
+            echo "Starting Deployment..."
+            echo "======================================"
+
+            # Move to project directory
+            cd ~/PingMe
+
+            # Show current path
+            pwd
+
+            # Pull latest code
+            echo "Pulling latest code..."
+            git pull origin main
+
+            # Validate Docker Compose
+            echo "Validating docker-compose.yml..."
+            docker compose config
+
+            # Build backend image
+            echo "Building Backend..."
+            docker compose build backend
+
+            # Build frontend image
+            echo "Building Frontend..."
+            docker compose build frontend
+
+            # Restart backend container
+            echo "Restarting Backend..."
+            docker compose up -d backend
+
+            # Restart frontend container
+            echo "Restarting Frontend..."
+            docker compose up -d frontend
+
+            # Show running containers
+            echo "Running Containers:"
+            docker ps
+
+            # Remove dangling images
+            echo "Cleaning Docker Images..."
+            docker image prune -f
+
+            echo "======================================"
+            echo "Deployment Completed Successfully!"
+            echo "======================================"
